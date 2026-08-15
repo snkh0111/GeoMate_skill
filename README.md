@@ -1,5 +1,9 @@
 # GeoMate 地质实习 AI 助手
 
+<p align="center">
+  <img src="icon.png" width="160" alt="GeoMate 图标：岩层收束成峰，亦是指北之针">
+</p>
+
 > 一个 WorkBuddy Skill：陪地质基础薄弱的大学生跑完野外实习全程——实习前消化指导书、学会工具，实习中辅助鉴定与记录，实习后整理野簿、准备发言、搭报告。
 
 ## 为什么做这个 Skill（灵感复盘）
