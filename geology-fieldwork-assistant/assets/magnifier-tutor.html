@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>放大镜互动教室 · 地质实习助手</title>
+<style>
+  :root { --ink:#26242a; --paper:#f5f3f8; --accent:#6a5aa8; --accent2:#3f7d8c; --card:#ffffff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Microsoft YaHei","PingFang SC",sans-serif; background:var(--paper); color:var(--ink); line-height:1.7; }
+  header { background:linear-gradient(135deg,#4a3f78,#3f7d8c); color:#fff; padding:36px 20px 28px; text-align:center; }
+  header h1 { font-size:26px; letter-spacing:2px; }
+  header p { margin-top:8px; opacity:.9; font-size:14px; }
+  nav { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; background:#e6e0f0; padding:10px; position:sticky; top:0; z-index:10; }
+  nav button { border:none; background:#fff; color:var(--ink); padding:8px 16px; border-radius:20px; cursor:pointer; font-size:14px; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+  nav button.active { background:var(--accent); color:#fff; }
+  main { max-width:860px; margin:0 auto; padding:24px 18px 60px; }
+  section { display:none; }
+  section.show { display:block; animation:fade .3s; }
+  @keyframes fade { from{opacity:0; transform:translateY(8px);} to{opacity:1;} }
+  .card { background:var(--card); border-radius:14px; padding:22px; margin-bottom:18px; box-shadow:0 2px 8px rgba(40,30,70,.08); }
+  .card h2 { font-size:19px; color:var(--accent); margin-bottom:10px; }
+  .card h3 { font-size:16px; margin:14px 0 6px; color:var(--accent2); }
+  .metaphor { background:#ece7f7; border-left:4px solid var(--accent); padding:10px 14px; border-radius:0 10px 10px 0; margin:10px 0; font-size:14px; }
+  .metaphor::before { content:"💡 打个比方："; font-weight:bold; }
+  .steps { counter-reset:s; }
+  .step { position:relative; padding:12px 12px 12px 52px; border-bottom:1px dashed #ddd; }
+  .step::before { counter-increment:s; content:counter(s); position:absolute; left:10px; top:14px; width:28px; height:28px; border-radius:50%; background:var(--accent2); color:#fff; text-align:center; line-height:28px; font-weight:bold; }
+  .focus-demo { text-align:center; padding:10px 0; }
+  .mineral-view { width:220px; height:220px; margin:0 auto; border-radius:50%; border:12px solid #44403a; background:#cfc8b8; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(0,0,0,.25), inset 0 0 30px rgba(0,0,0,.2); overflow:hidden; }
+  .mineral-view svg { transition:filter .2s; }
+  input[type=range] { width:260px; margin-top:14px; accent-color:var(--accent); }
+  .mineral-table { width:100%; border-collapse:collapse; font-size:14px; }
+  .mineral-table th, .mineral-table td { border:1px solid #ddd; padding:8px 10px; text-align:left; vertical-align:top; }
+  .mineral-table th { background:#efeaf8; }
+  .mineral-table tr:nth-child(even) { background:#faf9fd; }
+  .quiz-opt { display:block; width:100%; text-align:left; background:#f4f1fa; border:2px solid transparent; border-radius:10px; padding:10px 14px; margin:8px 0; cursor:pointer; font-size:15px; }
+  .quiz-opt:hover { border-color:var(--accent); }
+  .quiz-opt.right { background:#e2f2e5; border-color:#4a7a5b; }
+  .quiz-opt.wrong { background:#f7e0dc; border-color:#c0392b; }
+  .feedback { margin-top:8px; font-size:14px; min-height:24px; }
+  .ctrl { text-align:center; margin-top:10px; }
+  .ctrl button { background:var(--accent2); color:#fff; border:none; padding:8px 18px; border-radius:8px; margin:4px; cursor:pointer; font-size:14px; }
+  footer { text-align:center; color:#998; font-size:12px; padding:20px; }
+  .checklist label { display:block; padding:8px 10px; border-radius:8px; cursor:pointer; }
+  .checklist label:hover { background:#f2eefb; }
+  .checklist input { margin-right:8px; accent-color:var(--accent); }
+  .done-bar { height:10px; background:#e5e0ef; border-radius:6px; overflow:hidden; margin:8px 0 2px; }
+  .done-fill { height:100%; width:0%; background:var(--accent2); transition:width .3s; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 放大镜互动教室</h1>
+  <p>小小一片镜，看清矿物的"身份证"</p>
+</header>
+<nav>
+  <button class="active" data-tab="m1">它是什么</button>
+  <button data-tab="m2">对焦练习</button>
+  <button data-tab="m3">观察五步走</button>
+  <button data-tab="m4">常见矿物速查</button>
+  <button data-tab="m5">练一练</button>
+</nav>
+<main>
+
+<section id="m1" class="show">
+  <div class="card">
+    <h2>野外放大镜是干什么的</h2>
+    <p>地质实习标配是 <b>10 倍手持放大镜</b>。肉眼只能看出"这是块灰石头"，放大镜下才能看清矿物的晶形、解理、双晶纹——这些正是认岩石的关键证据。</p>
+    <div class="metaphor">放大镜就是矿物世界的"显微镜入门卡"。岩石鉴定卡上"矿物形态、矿物特征"两栏，大半靠它填。</div>
+    <h3>看之前记住三条</h3>
+    <p>① 看<b>新鲜断面</b>，不看风化面（风吹日晒的表面早就"化了妆"）。<br>② 光线要足，迎着自然光看。<br>③ 一手镜一手标本，都在动，眼睛不动。</p>
+  </div>
+</section>
+
+<section id="m2">
+  <div class="card">
+    <h2>对焦练习：镜贴眼，石头找焦点</h2>
+    <p>正确手法是<b>把放大镜凑近眼睛（约 2—3 厘米），再把标本慢慢移近镜片</b>，直到图像清晰。新手常犯的错是把镜子伸老远去够石头——那样视野小还容易晃。</p>
+    <div class="focus-demo">
+      <div class="mineral-view">
+        <svg id="mineralSvg" width="180" height="180" viewBox="0 0 180 180">
+          <rect width="180" height="180" fill="#b8ad96"/>
+          <polygon points="30,40 70,25 95,55 60,80" fill="#e8c8c0" stroke="#8a6a60"/>
+          <polygon points="100,30 150,45 135,90 95,70" fill="#d8d8e0" stroke="#707080"/>
+          <polygon points="40,100 90,95 105,145 55,150" fill="#f0e0b8" stroke="#9a8a50"/>
+          <polygon points="115,105 155,100 160,150 120,155" fill="#3a3a42" stroke="#222"/>
+          <line x1="60" y1="30" x2="75" y2="72" stroke="#8a6a60" stroke-width="1"/>
+          <line x1="115" y1="40" x2="140" y2="80" stroke="#707080" stroke-width="1"/>
+          <line x1="55" y1="105" x2="95" y2="140" stroke="#9a8a50" stroke-width="1"/>
+        </svg>
+      </div>
+      <input type="range" id="focusRange" min="0" max="100" value="15">
+      <p id="focusLabel" style="font-size:14px;color:#776;">标本离镜头太远——模糊一片，慢慢移近……</p>
+    </div>
+    <div class="metaphor">对焦就像用相机拍微距：镜头不动，被拍的东西前后挪，总有一个距离"咔"地变清楚。</div>
+  </div>
+</section>
+
+<section id="m3">
+  <div class="card">
+    <h2>观察五步走（勾一遍就记住了）</h2>
+    <p>看矿物按固定顺序来，不会漏项。点下面的项目打勾，模拟一遍完整观察：</p>
+    <div class="done-bar"><div class="done-fill" id="doneFill"></div></div>
+    <div class="checklist" id="checklist">
+      <label><input type="checkbox"><b>① 颜色</b>——矿物的"肤色"。注意：颜色会骗人（石英有无色、紫色、烟灰色），只能当辅助。</label>
+      <label><input type="checkbox"><b>② 光泽</b>——矿物反光的"质感"：玻璃光、油脂光、金属光、珍珠光、丝绢光。</label>
+      <label><input type="checkbox"><b>③ 硬度</b>——指甲（2.5）划得动？小刀（5.5）划得动？划玻璃谁赢？</label>
+      <label><input type="checkbox"><b>④ 解理与断口</b>——有没有平平整整的裂面（解理），还是糙茬（断口）？解理有几组、夹角多少？</label>
+      <label><input type="checkbox"><b>⑤ 形态与含量</b>——晶体什么形状（板状、柱状、片状、粒状）？多大？估计占岩石百分之几？</label>
+    </div>
+    <p id="doneMsg" style="color:#4a7a5b;font-size:14px;"></p>
+  </div>
+</section>
+
+<section id="m4">
+  <div class="card">
+    <h2>常见矿物速查表（野外最实用的六行）</h2>
+    <table class="mineral-table">
+      <tr><th>矿物</th><th>一眼特征</th><th>硬度</th><th>放大镜下看什么</th></tr>
+      <tr><td><b>石英</b></td><td>无色/烟灰色，油脂光泽，贝壳状断口</td><td>7（划玻璃赢）</td><td>它形粒状，无解理，断口像碎玻璃碴</td></tr>
+      <tr><td><b>钾长石</b></td><td>肉红色板状</td><td>6</td><td>两组解理近直角，常见卡氏双晶</td></tr>
+      <tr><td><b>斜长石</b></td><td>灰白色板条状</td><td>6</td><td>解理面上有细密平行的双晶纹（像梳齿）</td></tr>
+      <tr><td><b>黑云母</b></td><td>黑色片状，能一片片剥开</td><td>2.5（指甲赢）</td><td>一组极完全解理，薄片有弹性</td></tr>
+      <tr><td><b>方解石</b></td><td>白色/无色，滴稀盐酸剧烈起泡</td><td>3（指甲划得动）</td><td>菱面体解理，透明晶体有双影</td></tr>
+      <tr><td><b>辉石</b></td><td>黑绿色短柱状</td><td>5.5—6</td><td>两组解理近直角（约 90°）</td></tr>
+      <tr><td><b>角闪石</b></td><td>黑色长柱状</td><td>5.5—6</td><td>两组解理夹角约 60°/120°（和辉石区分的关键）</td></tr>
+    </table>
+    <div class="metaphor">认矿物像认人：先看"脸"（颜色晶形），再看"习惯动作"（解理），最后核对"身份证"（硬度、双晶纹）。</div>
+  </div>
+</section>
+
+<section id="m5">
+  <div class="card">
+    <h2>练一练</h2>
+    <div id="quiz"></div>
+    <div class="feedback" id="quizFb"></div>
+    <div class="ctrl"><button onclick="nextQuiz()">下一题</button></div>
+  </div>
+</section>
+
+</main>
+<footer>地质实习助手 · 教学模块 · 可离线使用</footer>
+<script>
+const tabs = document.querySelectorAll('nav button');
+tabs.forEach(b => b.onclick = () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  document.querySelectorAll('main section').forEach(s => s.classList.remove('show'));
+  document.getElementById(b.dataset.tab).classList.add('show');
+});
+
+// Focus demo
+const range = document.getElementById('focusRange');
+const svg = document.getElementById('mineralSvg');
+const label = document.getElementById('focusLabel');
+function updateFocus(){
+  const v = +range.value;
+  const blur = Math.abs(v - 75) / 12;
+  svg.style.filter = `blur(${blur.toFixed(1)}px)`;
+  if (blur < 0.6) label.textContent = '✅ 清晰了！这个距离就是焦距——记住这个手感。';
+  else if (v < 75) label.textContent = '标本离镜头太远——模糊一片，慢慢移近……';
+  else label.textContent = '又太近了——糊了，往回退一点。';
+}
+range.oninput = updateFocus;
+updateFocus();
+
+// Checklist
+const boxes = document.querySelectorAll('#checklist input');
+boxes.forEach(cb => cb.onchange = () => {
+  const done = [...boxes].filter(x => x.checked).length;
+  document.getElementById('doneFill').style.width = (done / boxes.length * 100) + '%';
+  document.getElementById('doneMsg').textContent = done === boxes.length
+    ? '完整观察一遍达成！以后每块标本都按这个顺序看。'
+    : `已完成 ${done}/${boxes.length} 步`;
+});
+
+// Quiz
+const QUIZ = [
+  {q:'用放大镜的正确姿势是？', opts:['镜子伸远对准石头','镜子贴眼，标本移近对焦','标本不动，头凑过去','随便看'], a:1, why:'镜贴眼、物移动，视野大又稳。'},
+  {q:'观察矿物应该先看哪个面？', opts:['风化面','新鲜断面','有土的面','随便哪面'], a:1, why:'风化面会"化妆"，新鲜断面才是矿物的真面目。'},
+  {q:'黑色、能一片片剥开、指甲划得动的矿物最可能是？', opts:['石英','辉石','黑云母','方解石'], a:2, why:'片状+极完全解理+硬度小，是黑云母的招牌。'},
+  {q:'辉石和角闪石都是黑色柱状，靠什么区分？', opts:['颜色','解理夹角','光泽','大小'], a:1, why:'辉石解理近 90°，角闪石约 60°/120°。'},
+  {q:'鉴定岩石时，放大镜主要帮你看哪两栏？', opts:['颜色和气孔','矿物形态与矿物特征','硬度和密度','层理和断层'], a:1, why:'四要素里的矿物形态、矿物特征，大半靠放大镜观察。'},
+];
+let qi = 0;
+function renderQuiz(){
+  const q = QUIZ[qi % QUIZ.length];
+  const box = document.getElementById('quiz');
+  box.innerHTML = `<p><b>第 ${qi % QUIZ.length + 1} 题：</b>${q.q}</p>` +
+    q.opts.map((o,i)=>`<button class="quiz-opt" data-i="${i}">${o}</button>`).join('');
+  document.getElementById('quizFb').textContent = '';
+  box.querySelectorAll('.quiz-opt').forEach(btn => btn.onclick = () => {
+    const ok = +btn.dataset.i === q.a;
+    btn.classList.add(ok ? 'right' : 'wrong');
+    document.getElementById('quizFb').textContent = (ok ? '✅ 对了！' : '❌ 再想想。') + q.why;
+    box.querySelectorAll('.quiz-opt').forEach(b => b.disabled = true);
+  });
+}
+function nextQuiz(){ qi++; renderQuiz(); }
+renderQuiz();
+</script>
+</body>
+</html>

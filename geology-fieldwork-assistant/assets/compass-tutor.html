@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地质罗盘互动教室 · 地质实习助手</title>
+<style>
+  :root { --ink:#2b2620; --paper:#faf6ef; --accent:#b06a3b; --accent2:#4a7a5b; --card:#ffffff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Microsoft YaHei","PingFang SC",sans-serif; background:var(--paper); color:var(--ink); line-height:1.7; }
+  header { background:linear-gradient(135deg,#3d5a45,#4a7a5b); color:#fff; padding:36px 20px 28px; text-align:center; }
+  header h1 { font-size:26px; letter-spacing:2px; }
+  header p { margin-top:8px; opacity:.9; font-size:14px; }
+  nav { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; background:#efe7d8; padding:10px; position:sticky; top:0; z-index:10; }
+  nav button { border:none; background:#fff; color:var(--ink); padding:8px 16px; border-radius:20px; cursor:pointer; font-size:14px; box-shadow:0 1px 3px rgba(0,0,0,.12); transition:.2s; }
+  nav button.active { background:var(--accent); color:#fff; }
+  main { max-width:860px; margin:0 auto; padding:24px 18px 60px; }
+  section { display:none; }
+  section.show { display:block; animation:fade .3s; }
+  @keyframes fade { from{opacity:0; transform:translateY(8px);} to{opacity:1;} }
+  .card { background:var(--card); border-radius:14px; padding:22px; margin-bottom:18px; box-shadow:0 2px 8px rgba(60,40,20,.08); }
+  .card h2 { font-size:19px; color:var(--accent2); margin-bottom:10px; }
+  .card h3 { font-size:16px; margin:14px 0 6px; color:var(--accent); }
+  .metaphor { background:#f4ecdd; border-left:4px solid var(--accent); padding:10px 14px; border-radius:0 10px 10px 0; margin:10px 0; font-size:14px; }
+  .metaphor::before { content:"💡 打个比方："; font-weight:bold; }
+  .steps { counter-reset:s; }
+  .step { position:relative; padding:12px 12px 12px 52px; border-bottom:1px dashed #ddd; }
+  .step::before { counter-increment:s; content:counter(s); position:absolute; left:10px; top:14px; width:28px; height:28px; border-radius:50%; background:var(--accent2); color:#fff; text-align:center; line-height:28px; font-weight:bold; }
+  .compass-wrap { display:flex; flex-wrap:wrap; gap:24px; align-items:center; justify-content:center; }
+  .compass { position:relative; width:240px; height:240px; border-radius:50%; background:radial-gradient(circle at 50% 40%, #fdfdf8, #e8e2d2); border:10px solid #8a6f4d; box-shadow:inset 0 0 18px rgba(0,0,0,.2), 0 6px 16px rgba(0,0,0,.25); }
+  .dial { position:absolute; inset:14px; border-radius:50%; transition:transform .4s; }
+  .tick { position:absolute; left:50%; top:0; width:2px; height:10px; background:#555; transform-origin:1px 103px; }
+  .tick-label { position:absolute; left:50%; top:12px; font-size:10px; color:#333; transform-origin:0 91px; }
+  .needle { position:absolute; left:50%; top:50%; width:6px; height:180px; transform:translate(-50%,-50%); }
+  .needle::before { content:""; position:absolute; left:0; top:0; border:3px solid transparent; border-bottom:88px solid #c0392b; }
+  .needle::after { content:""; position:absolute; left:0; bottom:0; border:3px solid transparent; border-top:88px solid #2c3e50; }
+  .pin { position:absolute; left:50%; top:50%; width:14px; height:14px; background:#f1c40f; border:2px solid #8a6f4d; border-radius:50%; transform:translate(-50%,-50%); }
+  .bubble { position:absolute; right:26px; bottom:44px; width:40px; height:40px; border-radius:50%; background:radial-gradient(circle at 40% 35%, #dff3ff, #9fc8e0); border:2px solid #557; }
+  .bubble-dot { position:absolute; width:12px; height:12px; border-radius:50%; background:rgba(255,255,255,.75); border:1px solid #468; left:14px; top:14px; transition:.3s; }
+  .ctrl { text-align:center; margin-top:12px; }
+  .ctrl button { background:var(--accent2); color:#fff; border:none; padding:8px 18px; border-radius:8px; margin:4px; cursor:pointer; font-size:14px; }
+  .ctrl button:hover { filter:brightness(1.1); }
+  .hotspot { cursor:pointer; }
+  .part-list div { padding:6px 10px; border-radius:8px; cursor:pointer; }
+  .part-list div:hover, .part-list div.on { background:#f0e8da; }
+  .quiz-opt { display:block; width:100%; text-align:left; background:#f7f2e8; border:2px solid transparent; border-radius:10px; padding:10px 14px; margin:8px 0; cursor:pointer; font-size:15px; }
+  .quiz-opt:hover { border-color:var(--accent); }
+  .quiz-opt.right { background:#e2f2e5; border-color:var(--accent2); }
+  .quiz-opt.wrong { background:#f7e0dc; border-color:#c0392b; }
+  .feedback { margin-top:8px; font-size:14px; min-height:24px; }
+  .format-demo { font-size:26px; text-align:center; letter-spacing:4px; background:#2b2620; color:#f1c40f; border-radius:12px; padding:16px; margin:10px 0; font-family:Consolas,monospace; }
+  footer { text-align:center; color:#998; font-size:12px; padding:20px; }
+  .scene { background:#eef3ee; border-radius:12px; padding:14px; margin:10px 0; font-size:14.5px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧭 地质罗盘互动教室</h1>
+  <p>十分钟学会测产状 · 实习前偷偷练会，现场惊艳老师</p>
+</header>
+<nav>
+  <button class="active" data-tab="t1">认识罗盘</button>
+  <button data-tab="t2">动手模拟</button>
+  <button data-tab="t3">测产状三步</button>
+  <button data-tab="t4">读数练习</button>
+  <button data-tab="t5">记录格式</button>
+</nav>
+<main>
+
+<section id="t1" class="show">
+  <div class="card">
+    <h2>它是什么？</h2>
+    <p>地质罗盘是测量岩层"姿势"的仪器。岩层在空间里的姿势叫<b>产状</b>，用三个数描述：走向、倾向、倾角。</p>
+    <div class="metaphor">罗盘就是"指南针 + 量角器"的合体。指南针告诉你方向，量角器告诉你倾斜多少。</div>
+  </div>
+  <div class="card">
+    <h2>认识它的零件（点一点左边的罗盘部件）</h2>
+    <div class="compass-wrap">
+      <div class="compass">
+        <div class="dial" id="dial1"></div>
+        <div class="needle" style="transform:translate(-50%,-50%) rotate(25deg)"></div>
+        <div class="pin"></div>
+        <div class="bubble hotspot" data-part="bubble" title="水准气泡"><div class="bubble-dot"></div></div>
+        <div class="hotspot" data-part="needle" style="position:absolute;left:50%;top:14%;width:20px;height:70px;transform:translateX(-50%);" title="磁针"></div>
+        <div class="hotspot" data-part="dial" style="position:absolute;inset:0;border-radius:50%;" title="刻度盘"></div>
+      </div>
+      <div class="part-list" style="max-width:340px;">
+        <div data-part="needle"><b>磁针</b>：<span id="d-needle">红针永远指北。你转动罗盘，针不动，动的是刻度盘——读数就是读针尖对着的刻度。</span></div>
+        <div data-part="dial"><b>刻度盘</b>：<span id="d-dial">一圈 0°—360°。注意地质罗盘的刻度常是反着排的（象限式），别读错方向。</span></div>
+        <div data-part="bubble"><b>水准气泡</b>：<span id="d-bubble">圆圆的小水泡。气泡居中 = 罗盘水平。测走向、倾向时必须水平。</span></div>
+        <div data-part="clino"><b>侧伏水准（测斜器）</b>：<span id="d-clino">侧面的长水准泡，测倾角专用：把罗盘侧立贴住岩面，调它居中。</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="t2">
+  <div class="card">
+    <h2>动手试一试：针不动，盘在转</h2>
+    <p>点击按钮转动罗盘（相当于你原地转身），观察红色磁针——它始终指向北方不动，<b>读数 = 磁针红针尖端对准的刻度</b>。</p>
+    <div class="compass-wrap">
+      <div class="compass">
+        <div class="dial" id="dial2"></div>
+        <div class="needle" id="needle2"></div>
+        <div class="pin"></div>
+      </div>
+      <div>
+        <div class="ctrl">
+          <button onclick="rotateDial(-30)">⟲ 左转 30°</button>
+          <button onclick="rotateDial(30)">⟳ 右转 30°</button>
+          <button onclick="rotateDial(0,true)">复位</button>
+        </div>
+        <div class="format-demo" id="reading">N 0°</div>
+        <p style="text-align:center;font-size:13px;color:#776;">当前读数（红针所指刻度）</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="t3">
+  <div class="card">
+    <h2>测产状，就三步</h2>
+    <div class="metaphor">把岩层想象成一本摊开斜放的书：书脊的方向是走向，书页往哪边下坡是倾向，坡有多陡是倾角。</div>
+    <div class="steps">
+      <div class="step"><b>选面。</b>找一块平整、新鲜、有代表性的岩层面。滚石、松动块不选——那不是"原装"的岩层。</div>
+      <div class="step"><b>测走向/倾向。</b>罗盘长边贴紧岩面，保持水准气泡居中（罗盘水平），待磁针稳定后读数。走向读两个方向都行（相差 180°）；倾向 = 岩层下坡方向，与走向垂直。</div>
+      <div class="step"><b>测倾角。</b>把罗盘侧立起来，长边贴住岩面沿最大倾斜方向，调侧伏水准气泡居中，读出倾角（0° 水平，90° 直立）。</div>
+    </div>
+    <div class="scene">🧗 现场口诀：<b>一选面、二贴平、三读数。</b>同一岩面测 2—3 次取平均；两次读数差超过 5°，换面重测。</div>
+  </div>
+</section>
+
+<section id="t4">
+  <div class="card">
+    <h2>读数练习</h2>
+    <div id="quiz"></div>
+    <div class="feedback" id="quizFb"></div>
+    <div class="ctrl"><button onclick="nextQuiz()">下一题</button></div>
+  </div>
+</section>
+
+<section id="t5">
+  <div class="card">
+    <h2>野簿里的产状怎么记</h2>
+    <p>统一格式：<b>倾向° ∠ 倾角°</b></p>
+    <div class="format-demo">300° ∠ 35°</div>
+    <p>读作"倾向三百度，倾角三十五度"。意思是：岩层朝着 300° 方向（西北偏西）下坡，坡度 35°。</p>
+    <h3>易错点</h3>
+    <p>① 只记一个数 —— 不行，方向角度缺一不可。<br>② 走向倾向记混 —— 记倾向就够了，走向 ±90° 可推。<br>③ 罗盘没调平就读数 —— 数据作废，重测。</p>
+    <div class="metaphor">产状记录就像报"滑梯"：滑梯朝哪个方向滑（倾向），滑多陡（倾角）。</div>
+  </div>
+  <div class="card">
+    <h2>下一步</h2>
+    <p>到野外实测时，把罗盘贴上岩面拍张照片发给我，我帮你检查姿势对不对。学放大镜？打开《放大镜互动教室》。</p>
+  </div>
+</section>
+
+</main>
+<footer>地质实习助手 · 教学模块 · 可离线使用</footer>
+<script>
+const tabs = document.querySelectorAll('nav button');
+tabs.forEach(b => b.onclick = () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  document.querySelectorAll('main section').forEach(s => s.classList.remove('show'));
+  document.getElementById(b.dataset.tab).classList.add('show');
+});
+
+// Build dial ticks
+function buildDial(el) {
+  for (let a = 0; a < 360; a += 15) {
+    const t = document.createElement('div');
+    t.className = 'tick';
+    t.style.transform = `rotate(${a}deg)`;
+    if (a % 90 === 0) { t.style.height = '14px'; t.style.background = '#222'; }
+    el.appendChild(t);
+    if (a % 45 === 0) {
+      const l = document.createElement('div');
+      l.className = 'tick-label';
+      l.style.transform = `rotate(${a}deg)`;
+      l.textContent = a;
+      el.appendChild(l);
+    }
+  }
+}
+buildDial(document.getElementById('dial1'));
+buildDial(document.getElementById('dial2'));
+
+// Hotspot highlight
+document.querySelectorAll('.hotspot, .part-list div').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.part-list div').forEach(d => d.classList.remove('on'));
+    const p = el.dataset.part;
+    const target = document.querySelector(`.part-list div[data-part="${p}"]`);
+    if (target) { target.classList.add('on'); target.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+  });
+});
+
+// Dial rotation demo
+let angle = 0;
+function fmt(a){ return 'N ' + ((a%360)+360)%360 + '°'; }
+function rotateDial(delta, reset) {
+  angle = reset ? 0 : angle + delta;
+  document.getElementById('dial2').style.transform = `rotate(${-angle}deg)`;
+  document.getElementById('needle2').style.transform = `translate(-50%,-50%) rotate(0deg)`;
+  document.getElementById('reading').textContent = fmt(angle);
+}
+rotateDial(0, true);
+
+// Quiz
+const QUIZ = [
+  {q:'红针指着刻度盘的 60°，罗盘读数是多少？', opts:['60°','120°','240°','300°'], a:0, why:'红针指北，针尖对准的刻度就是读数：60°。'},
+  {q:'测走向时，水准气泡偏离了中心，应该？', opts:['直接读数','把罗盘调平再读','把罗盘侧立','换磁针'], a:1, why:'气泡居中=罗盘水平，这是走向/倾向读数有效的前提。'},
+  {q:'某岩层倾向 300°，走向是？', opts:['300°','30° 或 210°','120°','35°'], a:1, why:'走向与倾向垂直：300°−90°=210°，210°−180°=30°。'},
+  {q:'记录"300°∠35°"中的 35° 指什么？', opts:['走向','倾角','倾向','磁偏角'], a:1, why:'格式是 倾向°∠倾角°，∠ 后面是岩层的倾斜角度。'},
+  {q:'同一岩面测两次，读数差 12°，怎么办？', opts:['取第一次','取第二次','取平均就行','换面重测'], a:3, why:'差超过 5° 说明测量有问题，应换一块平整岩面重测。'},
+];
+let qi = 0;
+function renderQuiz(){
+  const q = QUIZ[qi % QUIZ.length];
+  const box = document.getElementById('quiz');
+  box.innerHTML = `<p><b>第 ${qi % QUIZ.length + 1} 题：</b>${q.q}</p>` +
+    q.opts.map((o,i)=>`<button class="quiz-opt" data-i="${i}">${o}</button>`).join('');
+  document.getElementById('quizFb').textContent = '';
+  box.querySelectorAll('.quiz-opt').forEach(btn => btn.onclick = () => {
+    const ok = +btn.dataset.i === q.a;
+    btn.classList.add(ok ? 'right' : 'wrong');
+    document.getElementById('quizFb').textContent = (ok ? '✅ 对了！' : '❌ 再想想。') + q.why;
+    box.querySelectorAll('.quiz-opt').forEach(b => b.disabled = true);
+  });
+}
+function nextQuiz(){ qi++; renderQuiz(); }
+renderQuiz();
+</script>
+</body>
+</html>

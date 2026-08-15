@@ -1,0 +1,320 @@
+{
+  "schema_version": "1",
+  "capabilities": [
+    "指导书消化",
+    "工具教学",
+    "岩石鉴定",
+    "姿势检查",
+    "录音转野簿",
+    "野簿与剖面图",
+    "课堂问题",
+    "报告框架",
+    "出发清单",
+    "成果导出",
+    "网络补充"
+  ],
+  "dependencies": [
+    {
+      "id": "python-runtime",
+      "type": "runtime",
+      "required": false,
+      "auth_type": "none",
+      "capabilities": ["指导书消化", "野簿与剖面图"],
+      "checks": [
+        {"id": "python-version", "type": "python", "required": false, "min_version": "3.10"}
+      ],
+      "setup": {
+        "official_home_url": "https://www.python.org/",
+        "official_docs_url": "https://www.python.org/doc/",
+        "download_url": "https://www.python.org/downloads/",
+        "steps": [
+          "打开 https://www.python.org/downloads/ 下载 3.10 或更高版本安装包",
+          "安装时勾选 Add python.exe to PATH",
+          "重新打开终端，执行 python --version 验证"
+        ],
+        "verify": "终端执行 python --version，输出 3.10 及以上即通过",
+        "security": "只从 python.org 官方下载安装包，不使用来历不明的第三方打包版",
+        "verified_at": "2026-08-15",
+        "applies_to_version": "Python 3.10+"
+      },
+      "degradation": [
+        {
+          "capability": "指导书消化",
+          "trigger": "Python 不可用或 extract_pdf_text.py 提取失败",
+          "fallback": "请用户直接粘贴指导书文字，由对话分析生成预习包",
+          "user_input": "指导书文字内容",
+          "limitations": "无法自动读取 PDF 文件本身；扫描件仍需用户自行转文字",
+          "evidence_label": "已验证",
+          "recovery": "安装 Python 3.10+ 后重新运行提取脚本",
+          "stop_condition": "用户既无法提供 PDF 也无法粘贴文字时停止"
+        },
+        {
+          "capability": "野簿与剖面图",
+          "trigger": "Python 不可用或 draw_profile.py 运行失败",
+          "fallback": "输出剖面图各要素的文字绘制说明，用户手绘或用绘图软件完成",
+          "user_input": "剖面方向、高程点、地层产状与厚度数据",
+          "limitations": "不生成 SVG 图文件，只给绘制指导",
+          "evidence_label": "已验证",
+          "recovery": "安装 Python 3.10+ 后重新运行绘图脚本",
+          "stop_condition": "用户无法提供任何剖面数据时停止"
+        }
+      ]
+    },
+    {
+      "id": "file-write",
+      "type": "permission",
+      "required": false,
+      "auth_type": "none",
+      "capabilities": ["成果导出"],
+      "checks": [
+        {"id": "home-dir-exists", "type": "file", "required": false, "path": "~"}
+      ],
+      "setup": {
+        "official_home_url": "https://support.microsoft.com/windows",
+        "official_docs_url": "https://support.microsoft.com/windows",
+        "steps": [
+          "选择一个当前用户有写权限的目录作为成果目录（如桌面或文档下的新建文件夹）",
+          "若写入被拒绝，更换目录或检查文件夹属性的只读设置"
+        ],
+        "verify": "在目标目录新建一个测试文件并能打开，即具备写权限",
+        "security": "成果只写入用户明确同意的目录；覆盖和删除前列明对象并征得确认",
+        "verified_at": "2026-08-15",
+        "applies_to_version": "Windows 10/11、macOS、Linux 桌面环境"
+      },
+      "degradation": [
+        {
+          "capability": "成果导出",
+          "trigger": "目标目录无写权限或写入失败",
+          "fallback": "在对话中输出成果全文，由用户手动复制保存",
+          "user_input": "可写入的目录路径，或接受对话内输出",
+          "limitations": "成果不落盘，对话外无法直接打开",
+          "evidence_label": "已验证",
+          "recovery": "更换可写目录后重试保存",
+          "stop_condition": "用户无法提供任何可写目录且拒绝对话内输出时停止"
+        }
+      ]
+    },
+    {
+      "id": "web-search",
+      "type": "network",
+      "required": false,
+      "auth_type": "none",
+      "capabilities": ["网络补充"],
+      "checks": [
+        {"id": "network-reachable", "type": "url", "required": false, "url": "https://www.baidu.com", "method": "HEAD", "expected_status": [200, 301, 302]}
+      ],
+      "setup": {
+        "official_home_url": "https://www.baidu.com/",
+        "official_docs_url": "https://www.baidu.com/",
+        "steps": [
+          "确认电脑已连接互联网",
+          "使用代理或校园网时确认代理设置生效"
+        ],
+        "verify": "浏览器能打开任意网页即网络可用",
+        "security": "网络补充内容必须标注【网络补充】，与用户的材料和观察记录分开",
+        "verified_at": "2026-08-15",
+        "applies_to_version": "任意可联网环境"
+      },
+      "degradation": [
+        {
+          "capability": "网络补充",
+          "trigger": "无网络连接或搜索服务不可用",
+          "fallback": "仅使用用户提供的材料和内置地质知识回答，并注明本次未联网补充",
+          "user_input": "无",
+          "limitations": "无法获取最新资料和地方性实习资料；回答基于已有知识",
+          "evidence_label": "已验证",
+          "recovery": "恢复网络连接后重新提问",
+          "stop_condition": "问题必须依赖实时网络资料且用户无法自行提供时停止"
+        }
+      ]
+    },
+    {
+      "id": "tencent-docs",
+      "type": "mcp",
+      "required": false,
+      "auth_type": "browser-login",
+      "capabilities": ["成果导出"],
+      "checks": [
+        {"id": "tencent-docs-registered", "type": "mcp", "required": false, "server": "tencent-docs"},
+        {"id": "tencent-docs-probe", "type": "mcp_probe", "required": true, "target": "腾讯文档：读取最近文档列表（脱敏，仅确认连通）"},
+        {"id": "tencent-docs-auth", "type": "auth_probe", "required": true, "target": "腾讯文档连接器授权状态"}
+      ],
+      "setup": {
+        "official_home_url": "https://docs.qq.com/",
+        "official_docs_url": "https://docs.qq.com/",
+        "login_url": "https://docs.qq.com/",
+        "console_path": ["WorkBuddy 设置", "连接器", "腾讯文档", "连接并按提示完成授权"],
+        "credential_storage": "由 WorkBuddy 连接器托管，用户无需也不应在对话中提供凭据",
+        "steps": [
+          "打开 WorkBuddy 设置，进入连接器列表",
+          "找到腾讯文档，点击连接",
+          "在弹出的腾讯文档页面登录并同意授权",
+          "返回 WorkBuddy 确认连接器显示已连接"
+        ],
+        "verify": "连接器列表中腾讯文档显示已连接；让助手读一次最近文档列表确认可用",
+        "rotate_or_revoke": "在 WorkBuddy 连接器面板断开连接；或在腾讯文档账号的授权管理中撤销第三方授权",
+        "security": "授权在腾讯官方页面完成；不在对话中粘贴账号密码或 Cookie",
+        "verified_at": "2026-08-15",
+        "applies_to_version": "WorkBuddy 桌面版连接器（2026-08）"
+      },
+      "degradation": [
+        {
+          "capability": "成果导出",
+          "trigger": "腾讯文档连接器未连接或授权失效",
+          "fallback": "成果保存为本地文件，并可选改存资料库",
+          "user_input": "是否改存资料库，或接受本地文件",
+          "limitations": "无法在腾讯文档中在线查看和协作",
+          "evidence_label": "已验证",
+          "recovery": "在 WorkBuddy 连接器面板重新连接腾讯文档",
+          "stop_condition": "用户要求必须写入腾讯文档且无法完成授权时停止该导出方式"
+        }
+      ]
+    },
+    {
+      "id": "workbuddy-library",
+      "type": "local-tool",
+      "required": false,
+      "auth_type": "none",
+      "capabilities": ["成果导出"],
+      "checks": [
+        {"id": "library-skill-present", "type": "file", "required": false, "path": "~/.workbuddy/plugins"}
+      ],
+      "setup": {
+        "official_home_url": "https://workbuddy.cn/",
+        "official_docs_url": "https://workbuddy.cn/",
+        "steps": [
+          "确认当前 WorkBuddy 已启用资料库能力",
+          "在对话中直接要求保存到资料库即可"
+        ],
+        "verify": "让助手在资料库创建一个测试文档并能看到",
+        "security": "资料库内容归用户账号所有，保存前列明将创建的文档名称",
+        "verified_at": "2026-08-15",
+        "applies_to_version": "WorkBuddy 桌面版（2026-08）"
+      },
+      "degradation": [
+        {
+          "capability": "成果导出",
+          "trigger": "资料库能力不可用",
+          "fallback": "成果保存为本地 Markdown 或 HTML 文件",
+          "user_input": "可写入的本地目录",
+          "limitations": "无法在线跨设备查看",
+          "evidence_label": "已验证",
+          "recovery": "确认 WorkBuddy 资料库功能可用后重试",
+          "stop_condition": "用户拒绝本地保存且资料库不可用时停止"
+        }
+      ]
+    }
+  ],
+  "functional_degradations": [
+    {
+      "capability": "指导书消化",
+      "trigger": "PDF 提取脚本失败或 PDF 为扫描件",
+      "fallback": "请用户粘贴指导书文字后继续分析",
+      "user_input": "指导书文字内容",
+      "limitations": "扫描件需要用户自行 OCR 或手打关键章节",
+      "evidence_label": "已验证",
+      "recovery": "换用文字版 PDF 或粘贴文字",
+      "stop_condition": "用户无法提供任何文字内容时停止"
+    },
+    {
+      "capability": "工具教学",
+      "trigger": "教学网页文件缺失或无法打开",
+      "fallback": "在对话中输出文字版教学步骤",
+      "user_input": "无",
+      "limitations": "没有交互演示，学习体验下降",
+      "evidence_label": "已验证",
+      "recovery": "重新获取完整 Skill 包",
+      "stop_condition": "无停止条件，文字版始终可用"
+    },
+    {
+      "capability": "岩石鉴定",
+      "trigger": "无照片或照片不清晰",
+      "fallback": "请用户口述颜色、光泽、硬度、结构等特征，按口述推断并降低置信度",
+      "user_input": "标本的可见特征描述",
+      "limitations": "口述推断误差更大，置信度最高只能给中",
+      "evidence_label": "已验证",
+      "recovery": "补拍清晰照片（整体、断面、矿物特写各一张）",
+      "stop_condition": "用户无法描述任何特征时停止"
+    },
+    {
+      "capability": "姿势检查",
+      "trigger": "无测量现场照片",
+      "fallback": "给出文字版自检清单并引导查看罗盘教学网页",
+      "user_input": "无",
+      "limitations": "无法针对实际操作纠错",
+      "evidence_label": "已验证",
+      "recovery": "现场补拍罗盘贴岩面的照片",
+      "stop_condition": "无停止条件，自检清单始终可用"
+    },
+    {
+      "capability": "录音转野簿",
+      "trigger": "用户未提供转写文字",
+      "fallback": "先给录音口述技巧，等用户转写后再整理",
+      "user_input": "录音转写的文字",
+      "limitations": "Skill 不直接处理音频文件",
+      "evidence_label": "已验证",
+      "recovery": "用户用手机转文字后发来",
+      "stop_condition": "用户无法提供任何文字时停止"
+    },
+    {
+      "capability": "野簿与剖面图",
+      "trigger": "绘图脚本不可用或剖面数据不全",
+      "fallback": "输出文字版绘制说明；数据不全时逐项引导用户补齐",
+      "user_input": "剖面方向、高程、地层产状与厚度",
+      "limitations": "不生成图文件；数据缺口标【待现场确认】",
+      "evidence_label": "已验证",
+      "recovery": "安装 Python 或补齐数据后重试",
+      "stop_condition": "用户无法提供任何剖面数据时只给模板"
+    },
+    {
+      "capability": "课堂问题",
+      "trigger": "无路线资料",
+      "fallback": "按通用地质实习主题（岩石、构造、地层）生成问题",
+      "user_input": "大致实习主题或地区",
+      "limitations": "问题不针对具体路线，针对性下降",
+      "evidence_label": "已验证",
+      "recovery": "用户提供路线资料后重新生成",
+      "stop_condition": "无停止条件，通用问题始终可生成"
+    },
+    {
+      "capability": "报告框架",
+      "trigger": "野簿内容不足",
+      "fallback": "只给报告骨架模板并列出缺失素材清单",
+      "user_input": "已有野簿或记录",
+      "limitations": "不代编观察内容，骨架待用户回填",
+      "evidence_label": "已验证",
+      "recovery": "用户补齐野簿后重新生成",
+      "stop_condition": "用户要求代编观察数据时拒绝并停止该部分"
+    },
+    {
+      "capability": "出发清单",
+      "trigger": "无路线和天气信息",
+      "fallback": "生成通用版野外实习装备与安全清单",
+      "user_input": "实习天数、季节、大致地形（可选）",
+      "limitations": "不含针对性物品（如特殊防护）",
+      "evidence_label": "已验证",
+      "recovery": "用户提供路线后补充定制项",
+      "stop_condition": "无停止条件，通用清单始终可生成"
+    },
+    {
+      "capability": "成果导出",
+      "trigger": "本地写入失败且资料库、腾讯文档均不可用",
+      "fallback": "对话内输出成果全文",
+      "user_input": "可写目录或接受对话输出",
+      "limitations": "成果不落盘，需用户手动保存",
+      "evidence_label": "已验证",
+      "recovery": "修复写权限或连接在线文档后重试",
+      "stop_condition": "用户拒绝对话输出时停止"
+    },
+    {
+      "capability": "网络补充",
+      "trigger": "无网络",
+      "fallback": "仅用用户材料和内置知识，注明未联网",
+      "user_input": "无",
+      "limitations": "无法获取实时和地方性资料",
+      "evidence_label": "已验证",
+      "recovery": "恢复网络后重试",
+      "stop_condition": "答案必须依赖实时资料且用户无法提供时停止"
+    }
+  ]
+}
