@@ -1,4 +1,4 @@
-# GeoMate 地质实习 AI 助手
+# GeoMate · 地质实习 AI 助手
 
 <p align="center">
   <img src="icon.png" width="160" alt="GeoMate 图标：岩层收束成峰，亦是指北之针">
